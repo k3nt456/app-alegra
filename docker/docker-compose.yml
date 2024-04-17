@@ -1,0 +1,42 @@
+version: '3.3'
+
+services:
+    laravel-docker:
+        container_name: ${PROJECT_NAME}_laravel
+        build:
+            context: .
+            dockerfile: ./laravel/Dockerfile
+        volumes:
+        - ${PROJECT_LARAVEL}:/var/www/html
+        ports:
+        - ${PORT_LARAVEL}:80
+        networks:
+        - alegra
+
+    mysql_db:
+        container_name: ${PROJECT_NAME}_mysql
+        build:
+            context: .
+            dockerfile: ./mysql/Dockerfile
+        environment:
+            MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+            MYSQL_DATABASE: ${MYSQL_DATABASE}
+        ports:
+            - ${MYSQL_PORT}:3306
+        networks:
+            - alegra
+
+    phpmyadmin:
+        container_name: ${PROJECT_NAME}_phpmyadmin
+        build:
+            context: .
+            dockerfile: ./phpmyadmin/Dockerfile
+        ports:
+            - ${PHPMYADMIN_PORT}:80
+        environment:
+            - PMA_ARBITRARY=${PMA_ARBITRARY}
+        networks:
+            - alegra
+
+networks:
+    alegra:
