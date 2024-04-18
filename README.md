@@ -6,8 +6,8 @@ Un reconocido restaurante ha decidido tener una jornada de donación de comida a
 ----
 | Stack tecnológico| Versión|
 | ------        | ------    |
-| PHP           | 8.2.18    |
-| Laravel       | ^10.0     |
+| PHP           | 8.2.13    |
+| Laravel       | 10.48.8   |
 | MySQL         | 8.2.0     |
 | PhpMyAdmin    | 5.2.1     |
 
@@ -65,7 +65,7 @@ La base de datos se ha generado utilizando las migraciones de Laravel y se ha or
 
 
 ## DESPLIEGUE A SERVIDOR
-[🛜WEB DESPLEGADA](https://147-185-239-37.cloud-xip.com/)
+* En el siguiente enlace esta el despliegue de la web - [🛜WEB DESPLEGADA](https://147-185-239-37.cloud-xip.com/)
 
 * Utilización de [Clever Cloud](https://developers.clever-cloud.com/doc/) para el despliegue de la base de datos en un servidor.
 

@@ -16,7 +16,12 @@ use Illuminate\Support\Facades\DB;
 class OrdersService
 {
     use HasResponse;
+    private $alegraApi;
 
+    public function __construct()
+    {
+        $this->alegraApi = getenv('API_ALEGRA');
+    }
     public function index()
     {
         $ordersTotal = Orders::all()->load('user', 'recipe');
@@ -24,6 +29,7 @@ class OrdersService
 
         return view('kitchen.orders', compact('orders'));
     }
+
 
     private function structureOrders($ordersTotal)
     {
@@ -105,8 +111,8 @@ class OrdersService
             # Verificar existencia de ingredientes necesarios
             $checkIngredients = $this->checkIngredients($recipes);
 
-            /* # Comprar ingredientes faltantes
-            $buyIngredients = $this->buyIngredients($checkIngredients); FALTA*/
+            # Comprar ingredientes faltantes
+            $this->buyIngredients($checkIngredients);
 
             # Obtener el tiempo final
             $endTime = microtime(true);
@@ -175,7 +181,7 @@ class OrdersService
         # Iterar sobre cada ingrediente del array $data
         foreach (array_keys($data) as $ingredient) {
             # Realizar la solicitud a la API para comprar el ingrediente
-            $response = $client->get('https://recruitment.alegra.com/api/farmers-market/buy', [
+            $response = $client->get($this->alegraApi, [
                 'query' => [
                     'ingredient' => $ingredient
                 ]
@@ -200,7 +206,7 @@ class OrdersService
 
             # Verificar si el ingrediente está completo
             if ($data[$ingredient] <= 0) {
-                unset($data[$ingredient]); // Eliminar el ingrediente del array si está completo
+                unset($data[$ingredient]); # Eliminar el ingrediente del array si está completo
             }
         }
     }
