@@ -98,9 +98,10 @@ Luego instalar Make (Modo administrador)
 choco install make
 ```
 
-Con las instalaciones anteriores solo necesita escribir los siguientes comandos desde el archivo yml de docker
+Con las instalaciones anteriores solo necesita escribir los siguientes comandos estando ubicado dentro de la carpeta docker
+El archivo `.env.example` ya esta configurado con las credenciales de la configuración de docker, antes de usar los comandos `make` recuerde copiar el archivo en un .env .
 >`make setup`
->>Para hacer el build, up y composer-update
+>>Para hacer el docker-compose build, docker-compose up -d, composer update y key:generate
 
 >`make data`
 >>Para hacer la migración junto con las semillas del proyecto
@@ -110,6 +111,6 @@ Con las instalaciones anteriores solo necesita escribir los siguientes comandos 
 
 En caso no desear instalar `Make` puede obviar lo anterior y escribir los comandos completos que puede ubicarlos en `app-alegra/docker/Makefile`
 
->Nota: Los archivos dockerfile fueron separados en distintas carpetas, el .env contiene sus variables de nombres, puertos para leerse desde el makefile y docker-compose.yml para una mejor integración. El archivo `.env.example` ya esta configurado con las credenciales de la configuración de docker.
+>Nota: Los archivos dockerfile fueron separados en distintas carpetas, el .env contiene sus variables de nombres, puertos para leerse desde el makefile y docker-compose.yml para una mejor integración.
 
 ---
