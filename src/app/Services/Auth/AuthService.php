@@ -74,18 +74,35 @@ class AuthService
 
     public function login($params)
     {
-        $credentials = [
-            'username' => $params['username'],
-            'password' => $params['password'],
-        ];
+        try {
+            # Verificar inicio de sesión
+            if (Auth::check()) return redirect()->route('kitchen');
 
-        if (Auth::attempt($credentials)) {
-            request()->session()->regenerate();
-            return redirect()->intended(route('kitchen'));
+            $credentials = [
+                'username' => $params['username'],
+                'password' => $params['password'],
+            ];
+
+            if (Auth::attempt($credentials)) {
+                request()->session()->regenerate();
+                return redirect()->intended(route('kitchen'));
+            }
+
+            session()->flash('error', 'Usuario o contraseña inválido, intente nuevamente.');
+            return redirect()->back();
+        } catch (\Throwable $th) {
+            session()->flash('error', 'Hubo un erro al iniciar sesión, intente nuevamente.');
+            return redirect()->back();
+        }
+    }
+
+    public function showLoginForm()
+    {
+        if (Auth::check()) {
+            return redirect()->route('kitchen');
         }
 
-        session()->flash('error', 'Usuario o contraseña inválido, intente nuevamente.');
-        return redirect()->back();
+        return view('auth.login');
     }
 
     public function logout()

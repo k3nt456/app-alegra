@@ -47,7 +47,7 @@ $(document).ready(function () {
                 $('#order-form').submit();
             },
             error: function (jqXHR, textStatus, errorThrown) {
-                // showError(jqXHR.responseJSON.data.message);
+                showError(jqXHR.responseJSON.data.message);
             }
         });
     });
@@ -81,7 +81,7 @@ $(document).ready(function () {
                 recipeIds = [];
                 // Ocultar la pantalla de carga y mostrar mensaje de error
                 hideLoading();
-                // showError(jqXHR.responseJSON.data.message);
+                showError(jqXHR.responseJSON.data.message);
             }
         });
     });
