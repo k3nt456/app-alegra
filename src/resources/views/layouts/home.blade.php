@@ -9,6 +9,7 @@
         integrity="sha384-T3c6CoIi6uLrA9TneNEoa7RxnatzjcDSCmG1MXxSR1GAsXEV/Dwwykc2MPK8M2HN" crossorigin="anonymous" />
     @yield('css')
     <link rel="stylesheet" href="{{ asset('assets/home.css') }}">
+    <link rel="icon" type="image/png" href="{{ asset('assets/login/img/logo.png') }}">
 </head>
 
 <body>

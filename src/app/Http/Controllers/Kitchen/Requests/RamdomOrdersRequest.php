@@ -6,7 +6,7 @@ use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Http\Exceptions\HttpResponseException;
 
-class OrdersRequest extends FormRequest
+class RamdomOrdersRequest extends FormRequest
 {
     public function authorize(): bool
     {
@@ -16,14 +16,13 @@ class OrdersRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'recipes'   => ['required', 'array', 'max:5'],
-            'recipes.*' => ['required', 'integer']
+            'count' => ['required', 'integer', 'between:1,5']
         ];
     }
 
     protected function failedValidation(Validator $validator)
     {
-        session()->flash('error', 'Por favor, no modifique la información.');
+        session()->flash('error', 'Por favor, rellene el campo de cantidad correctamente.');
 
         throw new HttpResponseException(response()->view('kitchen.kitchen', [], 422));
     }

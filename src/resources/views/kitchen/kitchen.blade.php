@@ -25,6 +25,10 @@
                 <img src="{{ asset('assets/kitchen/img/homero-cocinando.gif') }}" alt="Homero cocinando"
                     class="loading-gif">
                 <div class="loading-message">Los platillos se están preparando 🧑‍🍳</div>
+                <br>
+                <div class="recipe-list-container">
+                    <ul class="recipe-list text-li"></ul>
+                </div>
             </div>
         </div>
 
@@ -34,21 +38,27 @@
 
         <div class="row justify-content-center">
             <div class="col-md-6 text-center mb-4">
-                <form method="POST" action="{{ route('kitchen-orders', ['count' => 1]) }}">
+                <form method="GET" action="{{ route('random-orders') }}">
                     @csrf
+                    <input type="hidden" name="count" value="1">
                     <button type="submit" class="btn">
                         <img src="{{ asset('assets/kitchen/img/olla1.png') }}" alt="Imagen de olla" class="img-fluid"
                             style="max-width: 100px;">
                     </button>
                 </form>
+                {{-- Para las peticiones POST --}}
+                <form id="order-form" method="POST" action="{{ route('kitchen-orders') }}" style="display: none;">
+                    @csrf
+                    <input type="hidden" name="recipes" id="recipes-input">
+                </form>
                 <p>Ordenar un plato</p>
             </div>
 
             <div class="col-md-6 text-center mb-4">
-                <form method="POST" action="{{ route('kitchen-orders') }}">
+                <form method="GET" action="{{ route('random-orders') }}">
                     @csrf
                     <div class="input-group justify-content-center">
-                        <input type="number" class="form_control text_input" name="count" min="1" max="6"
+                        <input type="number" class="form_control text_input" name="count" min="1" max="5"
                             placeholder="Cantidad (1-5)" required>
                         <button type="submit" class="btn">
                             <img src="{{ asset('assets/kitchen/img/olla2.png') }}" alt="Imagen de olla 2" class="img-fluid"
@@ -64,5 +74,8 @@
 @endsection
 
 @section('js')
+    <script>
+        var kitchenOrdersRoute = "{{ route('kitchen-orders') }}";
+    </script>
     <script src="{{ asset('assets/kitchen/js/chargingScreen.js') }}"></script>
 @endsection

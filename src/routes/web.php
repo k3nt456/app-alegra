@@ -27,9 +27,10 @@ Route::view('/home', 'layouts.home')->middleware('auth')->name('home');
 # Cocina
 Route::group(['prefix' => 'kitchen'], function () {
     Route::view('/', 'kitchen.kitchen')->middleware('auth')->name('kitchen');
-    Route::post('/orders', [OrdersController::class, 'store'])->middleware('auth')->name('kitchen-orders');
     Route::get('/orders', [OrdersController::class, 'index'])->middleware('auth')->name('orders');
+    Route::get('/random-orders', [OrdersController::class, 'randomOrders'])->middleware('auth')->name('random-orders');
     Route::get('/recipes', [RecipesController::class, 'index'])->middleware('auth')->name('recipes');
+    Route::post('/orders', [OrdersController::class, 'store'])->middleware('auth')->name('kitchen-orders');
 });
 
 # Bodega

@@ -65,15 +65,15 @@ La base de datos se ha generado utilizando las migraciones de Laravel y se ha or
 
 
 ## DESPLIEGUE A SERVIDOR
-* En el siguiente enlace esta el despliegue de la web - [🛜WEB DESPLEGADA](https://147-185-239-37.cloud-xip.com/)
+* En el siguiente enlace esta el despliegue de la web - https://alegra.website/ - [WEB](https://www.hostinger.com/)
+
+* Implementación de [Hostinger](https://www.hostinger.com/) para el despliegue de la aplicación en un servidor.
 
 * Utilización de [Clever Cloud](https://developers.clever-cloud.com/doc/) para el despliegue de la base de datos en un servidor.
 
-* Implementación de [Kamatera](https://www.kamatera.com/) para el despliegue de la aplicación en un servidor.
-
 * Empleo de [Filezilla](https://filezilla-project.org/) para acceder a las carpetas del servidor.
 
-* Utilización de [Putty](https://www.putty.org/) para acceder al servidor para realizar ajustes de permisos y activación de funciones necesarios para la lectura del despliegue en Kamatera.
+* Utilización de [Putty](https://www.putty.org/) para acceder al servidor para realizar ajustes de permisos y activación de funciones necesarios para la lectura del despliegue.
 
 ### Inicio de sesión:
 Para acceder, se requiere un nombre de usuario y su contraseña.

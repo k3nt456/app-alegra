@@ -22,6 +22,7 @@ class OrdersService
     {
         $this->alegraApi = getenv('API_ALEGRA');
     }
+
     public function index()
     {
         $ordersTotal = Orders::all()->load('user', 'recipe');
@@ -70,20 +71,24 @@ class OrdersService
         return $statusText;
     }
 
+    public function randomOrders($params)
+    {
+        $recipes = Recipe::inRandomOrder()->take($params['count'])->get();
+        return $this->successResponse('Lectura exitosa.', $recipes);
+    }
+
     # Guardar las órdenes
     public function store($params)
     {
         try {
             # Verificar que sea un gerente o superior
-            if (Auth::user()->typeUser->id > 2) {
-                return $this->errorResponse('Solo un gerente o superior puede realizar esta operación.', 400);
-            }
+            if (Auth::user()->typeUser->id > 2) return $this->errorResponse('Solo un gerente o superior puede realizar esta operación.', 400);
 
             # Preparar los platos
-            $validate = $this->prepareDish($params['count']);
+            $validate = $this->prepareDish($params['recipes']);
             if (!$validate->original['status']) return $validate;
 
-            $response = $this->responseFormat($params['count']);
+            $response = $this->responseFormat(count($params['recipes']));
 
             return view('kitchen.kitchen', compact('response'));
         } catch (\Throwable $th) {
@@ -91,22 +96,22 @@ class OrdersService
         }
     }
 
-    private function responseFormat($count): string
+    public function responseFormat($recipes): string
     {
         $message = 'Su órden esta lista. Esperamos que lo disfrute.';
-        if ($count > 1) $message = 'Sus' . $count . ' órdenes estan listas. Esperamos que disfruten de sus platos.';
+        if ($recipes > 1) $message = 'Sus ' . $recipes . ' órdenes estan listas. Esperamos que disfruten de sus platos.';
 
         return $message;
     }
 
-    private function prepareDish($count)
+    private function prepareDish($arrayRecipes)
     {
         try {
             # Obtener el tiempo inicial
             $startTime = microtime(true);
 
-            # Obtener platos aleatorios
-            $recipes = $this->chooseRandomDishes($count);
+            # Verificar los platos recibidos
+            $recipes = $this->checkDishes($arrayRecipes);
 
             # Verificar existencia de ingredientes necesarios
             $checkIngredients = $this->checkIngredients($recipes);
@@ -120,16 +125,18 @@ class OrdersService
             # Iniciara preparar los platos a entregar, genera un array que luego será insertado
             $startPreparation = $this->startPreparation($recipes, $endTime - $startTime);
 
-
             return $this->successResponse('OK', $startPreparation);
         } catch (\Throwable $th) {
             return $this->externalError('durante la preparación del o los platos.', $th->getMessage());
         }
     }
 
-    private function chooseRandomDishes($count): object
+    private function checkDishes($arrayRecipes): object
     {
-        $recipes = Recipe::inRandomOrder()->take($count)->get();
+
+        $recipes = Recipe::whereIn('id', $arrayRecipes)->get();
+
+        if ($recipes->count() !== count($arrayRecipes)) return $this->errorResponse('No se encontraron los platos solicitados', 400);
 
         return $recipes;
     }
@@ -138,36 +145,35 @@ class OrdersService
     {
         $data = [];
 
-        # Itero los platos que solicitaron
-        foreach ($recipes as $recipe) {
+        # Obtener todos los ingredientes únicos necesarios
+        $uniqueIngredients = collect($recipes)->flatMap(function ($recipe) {
+            return $recipe->ingredients;
+        })->unique();
 
-            # Verifico que exista el ingrediente de cada plato
-            foreach ($recipe->ingredients as $key => $ingredientid) {
+        # Iterar sobre los ingredientes únicos
+        foreach ($uniqueIngredients as $ingredientId) {
+            # Obtener el modelo Food del ingrediente
+            $ingredient = Food::find($ingredientId);
 
-                # Lectura del ingrediente y su stock
-                $ingredient = Food::find($ingredientid);
-                $stock = Stock::where('idfood', $ingredientid)->first();
-                $stock = $stock->amount;
-
-                # De manera inicial guardo el ingrediente, lo inicializo en 0 y verifico si la clave ya existe antes de agregarla
-                if (!array_key_exists($ingredient->name, $data)) {
-                    $data[$ingredient->name] = 0;
-                }
-
-                # En caso que el stock sea menor a lo que pide un ingrediente, añado a la data que pediré por la API
-                if ($stock <= $recipe->amount_ingredients[$key]) {
-                    # Añado los ingredientes faltantes restando lo que tenga en base al stock
-                    if ($stock == 0) {
-                        $data[$ingredient->name] += $recipe->amount_ingredients[$key];
-                    } else {
-                        $data[$ingredient->name] += $recipe->amount_ingredients[$key] - $stock;
-                        $stock = 0;
-                    }
-                } else {
-                    # Caso contrario resto el stock con los ingredientes que usaré
-                    $stock -= $recipe->amount_ingredients[$key];
-                }
+            if (!$ingredient) {
+                # Si el ingrediente no existe, no se puede preparar ningún plato que lo contenga
+                continue;
             }
+
+            # Obtener el stock del ingrediente
+            $stock = Stock::where('idfood', $ingredientId)->value('amount');
+
+            # Calcular la cantidad total necesaria de este ingrediente para todos los platos
+            $totalNeeded = collect($recipes)->sum(function ($recipe) use ($ingredientId) {
+                $index = array_search($ingredientId, $recipe->ingredients);
+                return $index !== false ? $recipe->amount_ingredients[$index] : 0;
+            });
+
+            # Calcular la cantidad que necesitas comprar
+            $amountToBuy = max(0, $totalNeeded - $stock);
+
+            # Agregar el ingrediente y la cantidad a comprar al array $data
+            $data[$ingredient->name] = $amountToBuy;
         }
 
         return $data;
@@ -175,11 +181,50 @@ class OrdersService
 
     private function buyIngredients($data): void
     {
+        if (array_sum($data) == 0) return;
+
+        # Iterar sobre cada ingrediente del array $data
+        try {
+            DB::beginTransaction();
+
+            while (array_sum($data) > 0) {
+                foreach (array_keys($data) as $ingredient) {
+
+                    if ($data[$ingredient] > 0) {
+
+                        # Ir a comprar el ingrediente
+                        $shoppingResult = $this->goShopping($ingredient);
+
+                        # Guardar el registro en PlaceHistory
+                        PlaceHistory::create([
+                            'idfood'            => Food::where('name', $ingredient)->first()->id,
+                            'purchased_amount'  => $shoppingResult['quantitySold'],
+                            'busy_time'         => $shoppingResult['busyTime']
+                        ]);
+
+                        # Restar la cantidad vendida del ingrediente del array $data
+                        $data[$ingredient] -= $shoppingResult['quantitySold'];
+
+                        # Verificar si el ingrediente está completo
+                        if ($data[$ingredient] <= 0) {
+                            unset($data[$ingredient]); # Eliminar el ingrediente del array si está completo
+                        }
+                    }
+                }
+            }
+            DB::commit();
+            return;
+        } catch (\Throwable $th) {
+            DB::rollBack();
+        }
+    }
+
+    public function goShopping($ingredient): array
+    {
         # Inicializar un cliente Guzzle para realizar solicitudes HTTP
         $client = new Client();
 
-        # Iterar sobre cada ingrediente del array $data
-        foreach (array_keys($data) as $ingredient) {
+        try {
             # Realizar la solicitud a la API para comprar el ingrediente
             $response = $client->get($this->alegraApi, [
                 'query' => [
@@ -194,21 +239,26 @@ class OrdersService
             # Calcular el tiempo de respuesta de la API
             $busyTime = $response->getHeader('X-Response-Time')[0] ?? '00:00:00';
 
-            # Guardar el registro en PlaceHistory
-            PlaceHistory::create([
-                'idfood'            => Food::where('name', $ingredient)->first()->id,
-                'purchased_amount'  => $quantitySold,
-                'busy_time'         => $busyTime
-            ]);
-
-            # Restar la cantidad vendida del ingrediente del array $data
-            $data[$ingredient] -= $quantitySold;
-
-            # Verificar si el ingrediente está completo
-            if ($data[$ingredient] <= 0) {
-                unset($data[$ingredient]); # Eliminar el ingrediente del array si está completo
-            }
+            return [
+                'quantitySold'  => $quantitySold,
+                'busyTime'      => $busyTime
+            ];
+        } catch (\Throwable $e) {
+            # En caso de error de la api se realiza la simulación de las respuestas con otra función
+            return $this->alternativeApi();
         }
+    }
+
+    private function alternativeApi(): array
+    {
+        # Generar un número aleatorio del 0 al 5
+        $quantitySold = rand(0, 5);
+        $busyTime = '00:00:00';
+
+        return [
+            'quantitySold'  => $quantitySold,
+            'busyTime'      => $busyTime
+        ];
     }
 
     private function startPreparation($recipes, $time)

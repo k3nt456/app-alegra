@@ -3,6 +3,12 @@
     justify-content: center
 }
 
+.text-li {
+    color: #fff;
+    text-align: left;
+    font-size: 1.2rem;
+  }
+
 * {
     margin: 0;
     padding: 0;
