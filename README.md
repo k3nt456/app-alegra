@@ -65,7 +65,7 @@ La base de datos se ha generado utilizando las migraciones de Laravel y se ha or
 
 
 ## DESPLIEGUE A SERVIDOR
-* En el siguiente enlace esta el despliegue de la web - https://alegra.website/ - [WEB](https://www.hostinger.com/)
+* En el siguiente enlace esta el despliegue de la web - https://kitchen-ramdon.000webhostapp.com - [WEB](https://www.hostinger.com/)
 
 * Implementación de [Hostinger](https://www.hostinger.com/) para el despliegue de la aplicación en un servidor.
 
